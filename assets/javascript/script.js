@@ -7,8 +7,6 @@
 				research for each on firebase.
 				remove or delete on firebase.
 
-
-
 		2.) Using set.
 				Have array of train objects.
 				"set" and "get" like localStorage Assignment. 
@@ -16,11 +14,9 @@
 
 	========================= NEED TO DO ========================================
 
-		
-			3.) Minutes Away
-			5.) check input for time and frequency
+	
+			5.) check input for all fields
 			
-
 			BONUS.)
 				B1.) update your "minutes to arrival" and "next train time" text once every minute.
 				B2.) add update and remove buttons for each train
@@ -36,9 +32,12 @@
 	********* Validate all input boxes***************
 			check that they are not ""
 
+			validate frequency for "e" and decimals
 			see html input for frequency
 			modify html input for time only allow "numbers" and ":" and "enter"
+			After this modiby checkTime
 
+		NEED TO ADD CODE WHEN FIRST RUN TO CHECK IF DATABASE EXISTS!!!!!
 	
 */ //END Notes
 
@@ -71,12 +70,10 @@ var config =
  	this.firstTrainTime = firstTrainTime;
  	this.frequency = frequency;
 
-
- 	//BONUS: ADD A KEY For modification and Deletion
-
  };//END train object constructor
 
 
+//===================================================================================================
 
  $(document).ready(function(){
 
@@ -91,16 +88,16 @@ var config =
 
 	},60000);
 
-//
-database.ref().on("value",function(data){
-	firebaseDataObject = data.val();
-	displayTrainSchedule();
-	
-});
+	//COMMENT
+	database.ref().on("value",function(data){
+		firebaseDataObject = data.val();
+		displayTrainSchedule();
+		
+	});
 
+});//END $(document).ready;
 
-/*   MAY NOT NEED THESE 
-
+/*   MAY NOT NEED THESE =================================
 //
 database.ref().on("child_added",function(data){
 
@@ -116,7 +113,8 @@ database.ref().on("child_removed",function(data){
 // database.ref().on("child_changed",function(data){
 
 // });
-*/		
+*///=================================================		
+
 
 $("#submit").on("click", function(event){
 
@@ -160,7 +158,7 @@ $("#submit").on("click", function(event){
  
  });//END #submit on."click"
 
-});//END $(document).ready;
+
 
 //====================================================================================
 
@@ -186,7 +184,7 @@ function getNextArrival(time, frequency)
 function getMinutesAway(time)
 {
 	//Returns the difference in minutes bewteen trains next arrival and currrnt time.
-	return  (Math.round((getNextArrival(time) - moment())/60000));
+	return  ((getNextArrival(time).diff(moment(),"minutes")));
 
 }//END getMinutesAway
 
