@@ -1,43 +1,21 @@
-/*	Two ways to do this.
+/* 		========================= NEED TO DO =======================================
 
-		1.)  Using "push" sent each.
-
-				have to create hash or index key for each object
-
-				research for each on firebase.
-				remove or delete on firebase.
-
-		2.) Using set.
-				Have array of train objects.
-				"set" and "get" like localStorage Assignment. 
-
-
-	========================= NEED TO DO ========================================
-
-	
-			5.) check input for all fields
+		BONUS.)
 			
-			BONUS.)
-				B1.) update your "minutes to arrival" and "next train time" text once every minute.
-				B2.) add update and remove buttons for each train
-				B3.) allow only users who log in with their Google or GitHub accounts can use your site
+			B2.) add update and remove buttons for each train
+				UPDATE Button
+					glyphicons for buttons
 
-	interval timer to update "Minutes Away" and "Next Arrival"
-			first calculate "Next Arrival", use that to calculate "Minutes Away"
-
-	============================= currently ===================================
-
-	validate frequency for "e" and decimals use Math.round();
+					BOX POPS UP WITH FORM AND SUBMIT OR CANEL BUTTON
+					FORM HAS ALL FIELDS POPULATED WITH CURRENT VALUES
 	
-	********* Validate all input boxes***************
-			check that they are not ""
 
-			validate frequency for "e" and decimals
-			see html input for frequency
-			modify html input for time only allow "numbers" and ":" and "enter"
-			After this modiby checkTime
 
-		NEED TO ADD CODE WHEN FIRST RUN TO CHECK IF DATABASE EXISTS!!!!!
+			B3.) allow only users who log in with their Google or GitHub accounts can use your site
+
+	
+	============================= currently ===================================
+	
 	
 */ //END Notes
 
@@ -54,11 +32,11 @@ var config =
   
  firebase.initializeApp(config);
 
- //
+ //variable to store database name
  var database = firebase.database();
 
- //Object to store firebase database JSON 
- var firebaseDataObject = {};
+ //Object to store entire firebase database as JSON object 
+ var firebaseDataObject = null;
 
 
 // train object constructor
@@ -85,11 +63,13 @@ var config =
 	setInterval(function(){
 
 		$("#current-time").text(moment().format("MMM DD hh:mm A"));
+		displayTrainSchedule();
 
 	},60000);
 
-	//COMMENT
+	//Firebase database 'event handler' triggered when change in database "value".
 	database.ref().on("value",function(data){
+		
 		firebaseDataObject = data.val();
 		displayTrainSchedule();
 		
@@ -97,82 +77,106 @@ var config =
 
 });//END $(document).ready;
 
-/*   MAY NOT NEED THESE =================================
-//
-database.ref().on("child_added",function(data){
 
-});
-
-
-//
-database.ref().on("child_removed",function(data){
-
-});
-
-//
-// database.ref().on("child_changed",function(data){
-
-// });
-*///=================================================		
-
+//==========================================================================================
 
 $("#submit").on("click", function(event){
 
  	event.preventDefault();
 		
- 		var name = $("#name").val().trim();
- 		var destination = $("#destination").val().trim();
- 		var time = $("#time").val().trim().replace(/\s/g,""); //trims string and removes all white spaces 
- 		var frequency = parseInt($("#frequency").val().trim()); 
+ 	var name = $("#name").val().trim();
+ 	var destination = $("#destination").val().trim();
+ 	var time = $("#time").val().trim().replace(/\s/g,""); //trims string and removes all white spaces 
+ 	var frequency = parseInt($("#frequency").val().trim()); 
 
 
- 		if(!checkTime(time))
- 		{
- 			alert("Please Enter A Valid First Train Time! (HH:MM)");
- 			$("#time").val("").focus();
- 		}
- 		else
- 		{
+ 	//Tests if 'Train Name' value is empty.
+ 	if(name === "")
+ 	{
+ 		alert("Please Enter A Train Name");
+ 		$("#name").val("").focus();
 
- 			//Pads time if hour is single digit
- 			//(ex 9:25 becomes 09:25)
- 			time = pad(time);
+ 	}
+ 	//Tests if 'Destination' value is empty.	
+ 	else if(destination === "")
+ 	{
+ 		alert("Please Enter A Destination");
+ 		$("#destination").val("").focus();
+ 	}
+ 	//Tests if "First Train Time" is valid.
+ 	else if(!checkTime(time))
+ 	{
+ 		alert("Please Enter A Valid First Train Time! (HH:MM)");
+ 		$("#time").val("").focus();
+ 	}
+ 	//Tests if "Frequency" is valid.
+ 	else if(isNaN(frequency))
+ 	{
+ 		alert("Please Enter A Frequency");
+ 		$("#frequency").val("").focus();
+ 	}	
+ 	else
+ 	{
+ 		//Pads time if hour is single digit
+ 		//(ex 9:25 becomes 09:25)
+ 		time = pad(time);
 
+	 	//Creates a string with todays date and time of 'time';
+	 	var firstTrainTime = firstTimeString(time);
 
-	 		//Creates a string with todays date and time of 'time';
-	 		var firstTrainTime = firstTimeString(time);
-
-	 		//Creates a new 'train' object from the user input values 
-	 		var newTrain = new train(name, destination, firstTrainTime, frequency);
+	 	//Creates a new 'train' object from the user input values 
+	 	var newTrain = new train(name, destination, firstTrainTime, frequency);
 	 		
-	 		//Pushes "newTrain" object to firebase database.
-	 		database.ref().push( newTrain ); 		
+	 	//Pushes "newTrain" object to firebase database.
+	 	database.ref().push( newTrain ); 		
 
-	 		//Clears out input box fields
-	 		$("#name").val("");
-	 		$("#destination").val("");
-	 		$("#time").val("");    // Need To parse time? check moment documentation
-	 		$("#frequency").val("");
+	 	//Clears out input box fields
+	 	$("#name").val("");
+	 	$("#destination").val("");
+	 	$("#time").val("");   
+	 	$("#frequency").val("");
 	 		
- 		}//END else
+ 	}//END else
  
- });//END #submit on."click"
-
-
+});//END #submit on."click"
 
 //====================================================================================
 
+//Document .on("click" event handler for .remove buttons
+$(document).on("click", ".remove", function(){
+
+	//Gets "key" attribute of button which is trains "key";
+	var key = $(this).attr("key");
+
+	//removes 'train' object with "key" from firebase database.
+	database.ref().child(key).remove();
+});
+
+//====================================================================================
+
+//Document .on("click" event handler for .update buttons
+$(document).on("click", ".update", function(){
+
+	//Gets "key" attribute of button which is trains "key";
+	var key = $(this).attr("key");
+
+	//PUT UPDATE CODE HERE
+});
+
+//====================================================================================
+
+//Checks first train time against current time.
+//
 function getNextArrival(time, frequency)
 {
-	var currentTime = moment(); 
-
+	
 	var nextArrival = moment(time);
  	
- 	do 	
+ 	while(nextArrival < moment()) 	
  	{ 		
  		nextArrival.add(frequency, "minutes"); 
 
-	}while(nextArrival < currentTime);
+	};
 
 	return nextArrival;
 
@@ -194,68 +198,83 @@ function getMinutesAway(time)
 //update function gets trains from database displays to screen
 function displayTrainSchedule(){
 
-	//
+
+	//Clears out table so rows don't repeat.
 	$("#schedule").empty();
 
-	Object.keys(firebaseDataObject).forEach(function(key)
-	{
+	//Tests if database
+	if(firebaseDataObject !== null)
+	{	
+
+	
+		Object.keys(firebaseDataObject).forEach(function(key)
+		{
+		 		
+			var name = firebaseDataObject[key].name;
 	 		
-		var name = firebaseDataObject[key].name;
- 		
- 		var destination = firebaseDataObject[key].destination;
- 		var firstTrainTime = 	firebaseDataObject[key].firstTrainTime;
- 		var frequency = firebaseDataObject[key].frequency;	
- 		var nextArrival = getNextArrival(firstTrainTime, frequency) ;
- 		var minutesAway = getMinutesAway(nextArrival);
- 	
+	 		var destination = firebaseDataObject[key].destination;
+	 		var firstTrainTime = 	firebaseDataObject[key].firstTrainTime;
+	 		var frequency = firebaseDataObject[key].frequency;	
+	 		var nextArrival = getNextArrival(firstTrainTime, frequency) ;
+	 		var minutesAway = getMinutesAway(nextArrival);
+	 	
 
- 		var newTableRow = $("<tr>");
- 		
- 		newTableRow.append($("<td>").html(name));
- 		
- 		newTableRow.append($("<td>").html(destination));
- 		
- 		newTableRow.append($("<td>").html(frequency));
- 		
- 		newTableRow.append($("<td>").html(nextArrival.format("MMM DD hh:mm A")));
- 		
- 		newTableRow.append($("<td>").html(minutesAway));
+	 		var newTableRow = $("<tr>");
+	 		
+	 		newTableRow.append($("<td>").html(name));
+	 		
+	 		newTableRow.append($("<td>").html(destination));
+	 		
+	 		newTableRow.append($("<td>").html(frequency));
+	 		
+	 		newTableRow.append($("<td>").html(nextArrival.format("MMM DD hh:mm A")));
+	 		
+	 		newTableRow.append($("<td>").html(minutesAway));
 
-	/*	//CODE For Remove Button
-		
-		// ADD Remove Button
- 		var newButton = $("<button>")
- 		newButton.addClass("remove");
- 		newButton.attr("key", key);
- 		newButton.html("X");
-		newTableRow.append(newButton);
- 	*/	
- 		
-
- 		$("#schedule").append(newTableRow);
-
-
- 		//============= TEST CODE REMOVE ===================
-
- 			console.log("name: " + name + " | First Train Time: " + moment(firstTrainTime).format("MMM DD hh:mm A"));
+			// Creates 'Update' buttons for each train with attr 'key' of object key
+	 		var newButton = $("<button>")
+	 		newButton.addClass("remove");
+	 		newButton.attr("key", key);
+	 		newButton.html("<span class='glyphicon glyphicon-edit'></span>");
+			newTableRow.append($("<td>").html(newButton));
+			
+			// Creates 'Remove' buttons for each train with attr 'key' of object key
+	 		var newButton = $("<button>")
+	 		newButton.addClass("update");
+	 		newButton.attr("key", key);
+	 		newButton.html("<span class='glyphicon glyphicon-trash'></span>");
+			newTableRow.append($("<td>").html(newButton));
 
 
- 		//==================================================
+			
 
- 				
-	});
+	 		$("#schedule").append(newTableRow);
+
+	 	
+
+	 		//============= TEST CODE REMOVE ===================
+
+	 	console.log("name: " + name + " | First Train Time: " + moment(firstTrainTime).format("MMM DD hh:mm A"));
+
+
+	 		//=================================================
+	 				
+		});//END Object.keys(firebaseDataObject).forEach(function(key)
+	
+	}//END if(firebaseDataObject !== null)	
 
 }//END displayTrainSchedule
 
 
 //====================================================================================
 
-//Creates a moment.js object from the first train time value (time HH:mm) enterd by user
+//Creates a moment.js object from the 'first train time' value ('time' HH:mm) enterd by user
 function firstTimeString(time)
 {
 	//Creates a string storing today's date from monent() in YYYY-MM-DD format.
 	var currentDateString = moment().format("YYYY-MM-DD");
 
+	console.log("date: " + moment(new Date()))
 	//Returns a string with todays date and time of first train.	
 	return (currentDateString + "T" + time);
 
@@ -305,7 +324,7 @@ function checkTime(time)
 	array[0] = parseInt(array[0]);
 	array[1] = parseInt(array[1]);
 	
-	//checks if time is beteen 0 and 2359 
+	//Returns true if time is beteen 'hour' between 0 and 23 and 'minute' between 0 and 59;
 	return ((array[0] >= 0 && array[0] <= 23) && (array[1] >= 0 && array[1] <= 59)) ? true : false;	
 }//END checkTime()
 
