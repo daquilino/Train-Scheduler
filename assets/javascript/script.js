@@ -1,15 +1,20 @@
 /* 		========================= NEED TO DO =======================================
 
+
+
+
 		BONUS.)
 			
 			B2.) add update and remove buttons for each train
 				UPDATE Button
-					glyphicons for buttons
+					think about removing button and having just div
+					outlined.
 
 					BOX POPS UP WITH FORM AND SUBMIT OR CANEL BUTTON
 					FORM HAS ALL FIELDS POPULATED WITH CURRENT VALUES
-	
 
+					line 150 confirm deletion
+	
 
 			B3.) allow only users who log in with their Google or GitHub accounts can use your site
 
@@ -38,9 +43,19 @@ var config =
  //Object to store entire firebase database as JSON object 
  var firebaseDataObject = null;
 
+ //variable to store key of object to update.
+ var updateKey;
+
+ //variable to hold input values
+ var name;
+ var destination;
+ var time;
+ var frequency;
+
+
 
 // train object constructor
- function train(name, destination, firstTrainTime, frequency)
+ function Train(name, destination, firstTrainTime, frequency)
  {
 
  	this.name = name;
@@ -48,7 +63,7 @@ var config =
  	this.firstTrainTime = firstTrainTime;
  	this.frequency = frequency;
 
- };//END train object constructor
+ };//END Train object constructor
 
 
 //===================================================================================================
@@ -71,9 +86,14 @@ var config =
 	database.ref().on("value",function(data){
 		
 		firebaseDataObject = data.val();
-		displayTrainSchedule();
-		
+		displayTrainSchedule(); 		
+	}, 
+	//Function executes on error
+	function(objectError)
+	{
+		console.log("error:" + objectError.code);
 	});
+
 
 });//END $(document).ready;
 
@@ -83,68 +103,32 @@ var config =
 $("#submit").on("click", function(event){
 
  	event.preventDefault();
-		
- 	var name = $("#name").val().trim();
- 	var destination = $("#destination").val().trim();
- 	var time = $("#time").val().trim().replace(/\s/g,""); //trims string and removes all white spaces 
- 	var frequency = parseInt($("#frequency").val().trim()); 
 
+ 	//gets inputs. if valid creates newTrain object using values and pushes to firebase database.
+ 	if(getInputValues())
+ 	{
 
- 	//Tests if 'Train Name' value is empty.
- 	if(name === "")
- 	{
- 		alert("Please Enter A Train Name");
- 		$("#name").val("").focus();
-
- 	}
- 	//Tests if 'Destination' value is empty.	
- 	else if(destination === "")
- 	{
- 		alert("Please Enter A Destination");
- 		$("#destination").val("").focus();
- 	}
- 	//Tests if "First Train Time" is valid.
- 	else if(!checkTime(time))
- 	{
- 		alert("Please Enter A Valid First Train Time! (HH:MM)");
- 		$("#time").val("").focus();
- 	}
- 	//Tests if "Frequency" is valid.
- 	else if(isNaN(frequency))
- 	{
- 		alert("Please Enter A Frequency");
- 		$("#frequency").val("").focus();
- 	}	
- 	else
- 	{
- 		//Pads time if hour is single digit
- 		//(ex 9:25 becomes 09:25)
- 		time = pad(time);
-
-	 	//Creates a string with todays date and time of 'time';
+ 		//Creates a string with todays date and time of 'time';
 	 	var firstTrainTime = firstTimeString(time);
 
 	 	//Creates a new 'train' object from the user input values 
-	 	var newTrain = new train(name, destination, firstTrainTime, frequency);
+	 	var newTrain = new Train(name, destination, firstTrainTime, frequency);
 	 		
 	 	//Pushes "newTrain" object to firebase database.
 	 	database.ref().push( newTrain ); 		
 
-	 	//Clears out input box fields
-	 	$("#name").val("");
-	 	$("#destination").val("");
-	 	$("#time").val("");   
-	 	$("#frequency").val("");
-	 		
- 	}//END else
+ 	}
+
  
 });//END #submit on."click"
 
 //====================================================================================
 
+//on."click" for remove icon
 //Document .on("click" event handler for .remove buttons
 $(document).on("click", ".remove", function(){
 
+confirm("Are you sure you want to remove?");  //TEST CODE
 	//Gets "key" attribute of button which is trains "key";
 	var key = $(this).attr("key");
 
@@ -154,16 +138,37 @@ $(document).on("click", ".remove", function(){
 
 //====================================================================================
 
-//Document .on("click" event handler for .update buttons
+//on."click" for update icon
 $(document).on("click", ".update", function(){
 
 	//Gets "key" attribute of button which is trains "key";
-	var key = $(this).attr("key");
+	updateKey = $(this).attr("key");
+	displayUpdate()
 
-	//PUT UPDATE CODE HERE
 });
 
 //====================================================================================
+//on.click for 'Cancel' button
+
+$("#cancel").on("click", function(event){
+
+	event.preventDefault();
+
+	updateDone();
+
+});
+
+//=================================================================
+//on."click" for 'Update' button.
+$("#update").on("click", function(event){
+
+	event.preventDefault();
+
+	updateTrain();
+
+
+});
+//==================================================================
 
 //Checks first train time against current time.
 //
@@ -175,7 +180,6 @@ function getNextArrival(time, frequency)
  	while(nextArrival < moment()) 	
  	{ 		
  		nextArrival.add(frequency, "minutes"); 
-
 	};
 
 	return nextArrival;
@@ -188,7 +192,21 @@ function getNextArrival(time, frequency)
 function getMinutesAway(time)
 {
 	//Returns the difference in minutes bewteen trains next arrival and currrnt time.
-	return  ((getNextArrival(time).diff(moment(),"minutes")));
+	//.diff() always rounds toward zero (down if pos.) so 1.59 would be 1 minute.
+	//adding 'true' argument returns floating point.
+	//Which I round using Math.round so 1.59 would round up to 2.
+	var minutesAway = Math.round(getNextArrival(time).diff(moment(),"minutes",true));
+
+
+
+	//if minutesAway === 0 return "Arriving" else return minutesAway
+	if(minutesAway === 0)
+	{
+		return "Arrived";
+	}
+	else{
+	  return minutesAway;
+	}
 
 }//END getMinutesAway
 
@@ -210,8 +228,7 @@ function displayTrainSchedule(){
 		Object.keys(firebaseDataObject).forEach(function(key)
 		{
 		 		
-			var name = firebaseDataObject[key].name;
-	 		
+			var name = firebaseDataObject[key].name;	 		
 	 		var destination = firebaseDataObject[key].destination;
 	 		var firstTrainTime = 	firebaseDataObject[key].firstTrainTime;
 	 		var frequency = firebaseDataObject[key].frequency;	
@@ -232,32 +249,35 @@ function displayTrainSchedule(){
 	 		newTableRow.append($("<td>").html(minutesAway));
 
 			// Creates 'Update' buttons for each train with attr 'key' of object key
-	 		var newButton = $("<button>")
-	 		newButton.addClass("remove");
-	 		newButton.attr("key", key);
-	 		newButton.html("<span class='glyphicon glyphicon-edit'></span>");
-			newTableRow.append($("<td>").html(newButton));
+	 		var newDiv = $("<div>") //$("<button>")
+	 		newDiv.addClass("update");		
+	 		newDiv.attr(
+	 		{
+	 			
+	 			"key" : key,
+	 			"data-toggle" : "tooltip",
+	 			"data-placement" : "left",
+	 			"title" : "Update"
+	 		});
+
+	 		newDiv.html("<span class='glyphicon glyphicon-edit'></span>");
+			newTableRow.append($("<td>").html(newDiv));
 			
 			// Creates 'Remove' buttons for each train with attr 'key' of object key
-	 		var newButton = $("<button>")
-	 		newButton.addClass("update");
-	 		newButton.attr("key", key);
-	 		newButton.html("<span class='glyphicon glyphicon-trash'></span>");
-			newTableRow.append($("<td>").html(newButton));
-
-
-			
+	 		var newDiv = $("<div>") //$("<button>")
+	 		newDiv.addClass("remove");
+	 		newDiv.attr(
+	 		{	 			
+	 			"key" : key,
+	 			"data-toggle" : "tooltip",
+	 			"data-placement" : "left",
+	 			"title" : "Remove"
+	 		});
+	 		newDiv.html("<span class='glyphicon glyphicon-trash'></span>");
+			newTableRow.append($("<td>").html(newDiv));		
 
 	 		$("#schedule").append(newTableRow);
 
-	 	
-
-	 		//============= TEST CODE REMOVE ===================
-
-	 	console.log("name: " + name + " | First Train Time: " + moment(firstTrainTime).format("MMM DD hh:mm A"));
-
-
-	 		//=================================================
 	 				
 		});//END Object.keys(firebaseDataObject).forEach(function(key)
 	
@@ -274,7 +294,6 @@ function firstTimeString(time)
 	//Creates a string storing today's date from monent() in YYYY-MM-DD format.
 	var currentDateString = moment().format("YYYY-MM-DD");
 
-	console.log("date: " + moment(new Date()))
 	//Returns a string with todays date and time of first train.	
 	return (currentDateString + "T" + time);
 
@@ -307,6 +326,7 @@ function pad(time) {
     return (array[0] + ":" + array[1]);
 
 }//END pad()
+
 //========================================================================
 
 // checks if time  in put is valid
@@ -328,3 +348,119 @@ function checkTime(time)
 	return ((array[0] >= 0 && array[0] <= 23) && (array[1] >= 0 && array[1] <= 59)) ? true : false;	
 }//END checkTime()
 
+//========================================================================
+
+function displayUpdate()
+{
+
+	$("#submit").css("display", "none");
+	$("#update").css("visibility", "visible");
+	$("#cancel").css("visibility", "visible");
+
+	$("#name").val(firebaseDataObject[updateKey].name);	 		
+	$("#destination").val(firebaseDataObject[updateKey].destination);
+	$("#time").val(moment(firebaseDataObject[updateKey].firstTrainTime).format("HH:MM"));
+	$("#frequency").val(firebaseDataObject[updateKey].frequency);	
+
+}//END displayUpdate
+
+//========================================================================
+
+
+//Clears out values in input boxes, shows "Submit" button, hides "Update" and "Cancel" buttons.
+function updateDone()
+{
+
+	$("#name").val("");	 		
+	$("#destination").val("");
+	$("#time").val("");
+	$("#frequency").val("");	
+
+	$("#submit").css("display", "initial");
+	$("#update").css("visibility", "hidden");	
+	$("#cancel").css("visibility", "hidden");
+
+}//END updateDone
+
+//========================================================================
+
+//
+function updateTrain()
+{	
+	if(getInputValues())
+ 	{
+
+ 		//Creates a string with todays date and time of 'time';
+	 	var firstTrainTime = firstTimeString(time);
+
+	 	//Creates a new 'train' object from the user input values 
+	 	var newTrain = new Train(name, destination, firstTrainTime, frequency);
+	 		
+	 	//Updates "train" of key "updateKey" with newTrain object data.
+	 	database.ref("/" + updateKey ).update(newTrain);
+
+	 	updateDone();		
+ 	}
+
+	
+}//END updateTrain
+
+//===========================================================================
+
+// Gets input values from user on page and check for validity.
+// If all values are valid, 'true' is returned; 'false' otherwise.
+function getInputValues()
+{
+
+	name = $("#name").val().trim();
+ 	destination = $("#destination").val().trim();
+ 	time = $("#time").val().trim().replace(/\s/g,""); //uses regexp removes all white spaces 
+ 	frequency = parseInt($("#frequency").val().trim()); 
+
+
+ 	//Tests if 'Train Name' value is empty.
+ 	if(name === "")
+ 	{
+ 		alert("Please Enter A Train Name");
+ 		$("#name").val("").focus();
+ 		return false;
+
+ 	}
+ 	//Tests if 'Destination' value is empty.	
+ 	else if(destination === "")
+ 	{
+ 		alert("Please Enter A Destination");
+ 		$("#destination").val("").focus();
+ 		return false;
+ 	}
+ 	//Tests if "First Train Time" is valid.
+ 	else if(!checkTime(time))
+ 	{
+ 		alert("Please Enter A Valid First Train Time! (HH:MM)");
+ 		$("#time").val("").focus();
+ 		return false;
+ 	}
+ 	//Tests if "Frequency" is valid.
+ 	else if(isNaN(frequency))
+ 	{
+ 		alert("Please Enter A Frequency");
+ 		$("#frequency").val("").focus();
+ 		return false;
+ 	}	
+ 	else
+ 	{
+ 		//Pads time if hour is single digit
+ 		//(ex 9:25 becomes 09:25)
+ 		time = pad(time);
+
+	 	//Clears out input box fields
+	 	$("#name").val("");
+	 	$("#destination").val("");
+	 	$("#time").val("");   
+	 	$("#frequency").val("");
+
+	 	return true;
+	 		
+ 	}//END else
+
+}// END getInputValues
