@@ -1,9 +1,10 @@
 .jumbotron
 {
  background: rgba(0,0,0, .5);
- /*border: solid 1px lightblue;*/
  margin-top: 2%;
  color: white;
+ padding-top: 0;
+ padding-bottom: 10px;
 }
 
 body
@@ -43,9 +44,10 @@ body
 	visibility: hidden;
 }
 
-#schedule-panel
+#schedule-panel, #add-panel
 {
-/*background: rgba(255,255,255,.5);
-*/
+background: rgba(255,255,255,.9);
+
 }
+
 
