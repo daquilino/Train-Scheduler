@@ -1,8 +1,6 @@
 /* 		Douglas Aquilino       			March 11, 2017 
  		RCB - "Train Scheduler" 		Homework # 7   
-             				script.html               
-
-
+             				script.js               
 */ 
 
 
@@ -80,7 +78,7 @@ $(document).ready(function(){
 
 //==========================================================================================
 
-$("#submit").on("click", function(event){
+$("#submit-btn").on("click", function(event){
 
  	event.preventDefault();
 
@@ -99,7 +97,7 @@ $("#submit").on("click", function(event){
 
  	}
 
-});//END #submit on."click"
+});//END #submit-btn on."click"
 
 //====================================================================================
 
@@ -136,26 +134,39 @@ $(document).on("click", ".update", function()
 
 //====================================================================================
 
-//on.click for 'Cancel' button
-$("#cancel").on("click", function(event)
+//on.click for 'Close' button
+$("#close-btn").on("click", function(event)
 {
 	event.preventDefault();
 
 	updateDone();
 
-});//END #cancel.on"click"
+});//END #close-btn.on"click"
 
 //=================================================================
 //on."click" for 'Update' button.
-$("#update").on("click", function(event)
+$("#update-btn").on("click", function(event)
 {
 	event.preventDefault();
 
 	updateTrain();
 
-});//END #update.on"click"
+});//END #update-btn.on"click"
+
 //==================================================================
 
+
+//on."click" for 'Add Train' button.
+//Shows Add Train panel
+$("#add-train-btn").on("click", function(event)
+{
+	event.preventDefault();
+
+	$("#submit-btn").css("display", "initial");
+	$("#add-panel").slideToggle();
+
+});//END #add-train-btn.on"click"
+//==================================================================
 
 //Calculates and returns time of next train arrival.
 function getNextArrival(time, frequency)
@@ -231,7 +242,7 @@ function displayTrainSchedule()
 	 			"data-placement" : "left",
 	 			"title" : "Update"
 	 		});
-	 		newDiv.html("<span class='glyphicon glyphicon-edit'></span>");
+	 		newDiv.html("<span class='glyphicon glyphicon-edit pop'></span>");
 			newTableRow.append($("<td>").html(newDiv));
 			
 			// Creates 'Remove' <div>s for each train with attr 'key' of object key
@@ -244,7 +255,7 @@ function displayTrainSchedule()
 	 			"data-placement" : "left",
 	 			"title" : "Remove"
 	 		});
-	 		newDiv.html("<span class='glyphicon glyphicon-trash'></span>");
+	 		newDiv.html("<span class='glyphicon glyphicon-trash pop'></span>");
 			newTableRow.append($("<td>").html(newDiv));		
 
 	 		$("#schedule").append(newTableRow);
@@ -320,14 +331,15 @@ function checkTime(time)
 
 //========================================================================
 
-//Hides 'submit' button, shows 'update' and 'cancel' buttons.
+//Hides 'submit' button, shows 'Add Train' panel 'update' and 'Close' buttons.
 //Changes panel title to 'Update Train'.
 //Populates input fields with current train data to update.
 function displayUpdate()
 {
-	$("#submit").css("display", "none");
-	$("#update").css("visibility", "visible");
-	$("#cancel").css("visibility", "visible");
+	$("#add-panel").slideDown();
+
+	$("#submit-btn").css("display", "none");
+	$("#update-btn").css("display", "initial");
 
 	$("#add-title").html("Update Train");
 
@@ -336,26 +348,26 @@ function displayUpdate()
 	$("#time").val(moment(firebaseDataObject[updateKey].firstTrainTime).format("HH:mm"));
 	$("#frequency").val(firebaseDataObject[updateKey].frequency);	
 
-
 }//END displayUpdate
 
 //========================================================================
 
-
-//Clears out values in input boxes, shows "Submit" button, hides "Update" and "Cancel" buttons.
+//Clears out values in input boxes, shows "Submit" button, hides "Update" and "Close" buttons.
 ////Changes panel title to back to 'Add Train'.
 function updateDone()
 {
+	
 	$("#name").val("");	 		
 	$("#destination").val("");
 	$("#time").val("");
 	$("#frequency").val("");
 
+	$("#add-panel").slideUp();
+
 	$("#add-title").html("Add Train");	
 
-	$("#submit").css("display", "initial");
-	$("#update").css("visibility", "hidden");	
-	$("#cancel").css("visibility", "hidden");
+	$("#submit-btn").css("display", "initial");
+	$("#update-btn").css("display", "none");	
 
 }//END updateDone
 

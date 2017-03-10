@@ -1,6 +1,10 @@
-<!-- Douglas Aquilino       	March 11, 2017 -->
-<!-- RCB - "Train Scheduler" 	Homework # 7    -->
-<!--             index.html                -->
+<!-- 			Douglas Aquilino       			March 11, 2017 		
+ 				RCB - "Train Scheduler" 		Homework # 7   
+            					index.html          
+	
+	A train schedule application that incorporates Firebase to host arrival and departure data. App retrieves and manipulate this information with Moment.js. This website will provide up-to-date information about various trains, namely their arrival times and how many minutes remain until they arrive at their station.  Current time, 'Next Arrival' and 'Minutes Away' are updated every minute useing an interval timer.  Users 'Add a Train',  and 'Update' or 'Remove' any train on the schedule.
+-->
+
 
 <!DOCTYPE html>
 <html lang="en-us">
@@ -11,7 +15,7 @@
 	<title>Train Scheduler</title>
 	
 	<!-- Bootstrap-->
-	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"">
 	
 	<!-- Custom CSS-->
 	<link rel="stylesheet" type="text/css" href="assets/css/style.css">
@@ -61,9 +65,17 @@
 					<tbody id="schedule">
 					</tbody>
   				</table>
+				
+				<div class="text-center">
+  				 
+  				 	<button class="btn btn-info" id="add-train-btn" type="submit">Add Train</button>
+				</div>
+				
 			</div>
 		</div><!-- END .panel -->
 		
+		
+
 		<div class="panel panel-info" id="add-panel">
 			
 			<div class="panel-heading">
@@ -93,9 +105,10 @@
                   		<input class="form-control" id="frequency" type="number" min=0 onkeypress='return event.charCode >= 48 && event.charCode <= 57'>
                		 </div>    
                
-               		 <button class="btn btn-primary" id="submit" type="submit">Submit</button>
-               		 <button class="btn btn-primary" id="update" type="submit">Update</button>
-               		 <button class="btn btn-primary" id="cancel" type="submit">Cancel</button>
+               		 <button class="btn btn-info" id="submit-btn" type="submit">Submit</button>
+               		 <button class="btn btn-info" id="update-btn" type="submit">Update</button>
+               		 <button class="btn btn-info" id="close-btn" type="submit">Close</button>
+
               </form>
 
 			</div>
